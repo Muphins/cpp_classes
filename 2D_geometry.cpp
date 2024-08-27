@@ -1,6 +1,5 @@
 #include <cmath>
 
-
 #define PI 3.14159265359
 #define RAD(a) (a*PI/180)
 class cAngle{
@@ -14,7 +13,9 @@ private:
 	}
 public:
     //== Construstors
-	cAngle(const float value) : angle(value) {}
+	cAngle(const float value) : angle(value) {
+	    cap();
+	}
 	cAngle(): angle(0) {}
 	//== Operators
 	operator float() const {
@@ -72,9 +73,7 @@ public:
     }
     //== Functions
     cAngle angleto(cVector rhs){
-        float dot = this->x * rhs.x + this->y * rhs.y;
-        float det = this->x * rhs.y + this->y * rhs.x;
-        return std::atan2(det, dot);
+        return rhs.angle()-this->angle();
     }
     cAngle angle(){
         return std::atan2(y,x);
