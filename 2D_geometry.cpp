@@ -1,84 +1,149 @@
 #include <cmath>
 
 #define PI 3.14159265359
-#define RAD(a) (a*PI/180)
+#define RAD(a) ((a)*PI/180)
+
 class cAngle{
 private:
-	float angle;
+	double angle;
 	
-	float cap() {
+	double cap() {
 	    while(angle > PI) angle -= 2*PI;
 	    while(angle < -PI) angle += 2*PI;
 	    return angle;
 	}
 public:
     //== Construstors
-	cAngle(const float value) : angle(value) {
+	cAngle(double value) : angle(value) {
 	    cap();
 	}
 	cAngle(): angle(0) {}
 	//== Operators
-	operator float() const {
+	operator double() const {
 	    return cAngle(angle).cap();
 	}
-	cAngle& operator= (const float& value) {
+	cAngle& operator= (const double& value) {
 	    this->angle = value;
 	    cap();
 	    return *this; 
 	}
-	cAngle& operator+= (const float& value) {
+	cAngle& operator+= (const double& value) {
 	    this->angle += value;
 	    cap();
 	    return *this; 
 	}
-	cAngle& operator-= (const float& value) {
+	cAngle& operator-= (const double& value) {
 	    this->angle -= value;
 	    cap();
 	    return *this; 
 	}
 	//== Functions
-	float deg() const {
+	double deg() const {
 	    return angle *180/PI;
 	}
 };
 
 class cVector {
 private:
-    float x, y;
-
+    double _x, _y;
+    cAngle _angle;
+    void compute_angle(){
+        _angle = std::atan2(_y,_x);
+    }
 public:
     //== Constructors
-    cVector(): x(0), y(0) {}
-    cVector(float x_, float y_): x(x_), y(y_) {}
-    cVector(cAngle angle, float mag){
-        x = std::cos(angle)*mag;
-        y = std::sin(angle)*mag;
+    cVector(): _x(0), _y(0), _angle(0) {}
+    cVector(double x_, double y_): _x(x_), _y(y_) {
+        compute_angle();
+    }
+    cVector(const cVector lhs, const cVector rhs) {
+        _x = rhs._x - lhs._x;
+        _y = rhs._y - lhs._y;
+        compute_angle();
+    }
+    cVector(cAngle angle, double mag){
+        _x = std::cos(angle)*mag;
+        _y = std::sin(angle)*mag;
+        _angle = angle;
     }
     //== Operators
     cVector& operator+=(const cVector& rhs){
-        x+=rhs.x;
-        y+=rhs.y;
+        _x+=rhs._x;
+        _y+=rhs._y;
+        compute_angle();
         return *this;
     }
-    cVector& operator-=(const cVector& rhs){
-        x-=rhs.x;
-        y-=rhs.y;
+    cVector& operator+=(const cAngle& rhs){
+        //*this=cVector(this->angle()+rhs, this->mag());
+        cVector vect((cAngle)(this->angle()+rhs), this->mag());
+        *this = vect;
         return *this;
+    }
+    cVector operator+(const cVector& rhs){
+        cVector res(_x+rhs._x, _y+rhs._y);
+        return res;
+    }
+    cVector& operator-=(const cVector& rhs){
+        _x-=rhs._x;
+        _y-=rhs._y;
+        compute_angle();
+        return *this;
+    }
+    cVector& operator-=(const cAngle& rhs){
+        *this=cVector((cAngle)(this->angle()-rhs), this->mag());
+        return *this;
+    }
+    cVector operator-(const cVector& rhs){
+        cVector res(_x-rhs._x, _y-rhs._y);
+        return res;
     }
     template <typename Scalar>
     cVector& operator*=(const Scalar scalar){
-        x*=scalar;
-        y*=scalar;
+        _x*=scalar;
+        _y*=scalar;
+        return *this;
+    }
+    cVector& operator=(const double mag){
+        *this=cVector(angle(), mag);
         return *this;
     }
     //== Functions
-    cAngle angleto(cVector rhs){
+    double x() const { return _x;}
+    double y() const { return _y;}
+    cAngle angle() const {
+        return _angle; //std::atan2(_y,_x);
+    }
+    const double mag(){
+        return std::sqrt(_x*_x + _y*_y);
+    }
+    void set_x(double x){
+        _x = x;
+        compute_angle();
+    }
+    void set_y(double y){
+        _y = y;
+        compute_angle();
+    }
+    void set_angle(cAngle angle){
+        *this = cVector(angle, mag());
+    }
+    void set_mag(double mag){
+        *this = cVector(angle(), mag);
+    }
+    const cAngle angle_to(cVector rhs){
         return rhs.angle()-this->angle();
     }
-    cAngle angle(){
-        return std::atan2(y,x);
-    }
-    float mag(){
-        return std::sqrt(x*x + y*y);
+    const cVector proj_to(cVector rhs){
+        return cVector(rhs.angle(), this->mag()*cos(rhs.angle()-_angle));
     }
 };
+
+template <typename Scalar>
+cVector operator*(const cVector& vect, const Scalar& scalar){
+    return cVector(vect.x()*scalar, vect.y()*scalar);
+}
+template <typename Scalar>
+cVector operator*(const Scalar& scalar, cVector& vect){
+    return cVector(vect.x()*scalar, vect.y()*scalar);
+    //return cVector(vect._x*scalar, vect._y*scalar);
+}
