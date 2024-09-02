@@ -1,4 +1,3 @@
-#include <cmath>
 
 #define PI 3.14159265359
 #define RAD(a) ((a)*PI/180)
@@ -116,6 +115,12 @@ public:
     const double mag(){
         return std::sqrt(_x*_x + _y*_y);
     }
+    inline const double mag2(){
+        return (_x*_x + _y*_y);
+    }
+    inline const double dot(const cVector& rhs){
+        return _x*rhs._x + _y*rhs._y;
+    }
     void set_x(double x){
         _x = x;
         compute_angle();
@@ -129,12 +134,14 @@ public:
     }
     void set_mag(double mag){
         *this = cVector(angle(), mag);
+        if(mag < 0) _angle += PI;
     }
     const cAngle angle_to(cVector rhs){
         return rhs.angle()-this->angle();
     }
     const cVector proj_to(cVector rhs){
-        return cVector(rhs.angle(), this->mag()*cos(rhs.angle()-_angle));
+        double factor= dot(rhs)/rhs.mag2();
+        return cVector(rhs._x*factor, rhs._y*factor);
     }
 };
 
